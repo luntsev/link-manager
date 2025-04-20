@@ -2,3 +2,4 @@
 /postgres-data
 /.env
 /.git
+/docker-compose.yml
