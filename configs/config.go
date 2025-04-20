@@ -1,9 +1,11 @@
 package configs
 
 import (
-	"github.com/joho/godotenv"
+	"link-manager/pkg/token"
 	"log"
 	"os"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -29,7 +31,7 @@ func LoadConfig() *Config {
 			Dsn: os.Getenv("DSN"),
 		},
 		Auth: AuthConfig{
-			Secret: os.Getenv("TOKEN"),
+			Secret: token.GenToken(6),
 		},
 	}
 }
