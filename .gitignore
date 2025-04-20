@@ -1,1 +1,3 @@
 /vscode
+/postgres-data
+/.env
