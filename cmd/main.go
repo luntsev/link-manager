@@ -4,16 +4,27 @@ import (
 	"fmt"
 	"link-manager/configs"
 	"link-manager/internal/auth"
+	"link-manager/internal/link"
 	"link-manager/pkg/db"
 	"net/http"
 )
 
 func main() {
 	conf := configs.LoadConfig()
-	_ = db.NewDb(conf)
+	dataBase := db.NewDb(conf)
 	router := http.NewServeMux()
+
+	//Repository
+
+	linkRepository := link.NewLinkRepository(dataBase)
+
+	//Hendlers
 	auth.NewAuthHendler(router, auth.AuthHandlerDeps{
 		Config: conf,
+	})
+
+	link.NewLinkHendler(router, link.LinkHandlerDeps{
+		LinkRepo: linkRepository,
 	})
 
 	server := http.Server{

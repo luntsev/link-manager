@@ -12,8 +12,13 @@ type Link struct {
 }
 
 func NewLink(url string) *Link {
-	return &Link{
-		Url:  url,
-		Hash: token.GenToken(10),
+	link := Link{
+		Url: url,
 	}
+	link.GenHash()
+	return &link
+}
+
+func (l *Link) GenHash() {
+	l.Hash = token.GenToken(10)
 }

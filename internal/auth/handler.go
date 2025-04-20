@@ -8,11 +8,11 @@ import (
 	"net/http"
 )
 
-type AuthHandler struct {
+type AuthHandlerDeps struct {
 	*configs.Config
 }
 
-type AuthHandlerDeps struct {
+type AuthHandler struct {
 	*configs.Config
 }
 
