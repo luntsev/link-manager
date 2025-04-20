@@ -2,15 +2,17 @@ package main
 
 import (
 	"fmt"
-	//"link-manager/configs"
+	"link-manager/configs"
 	"link-manager/internal/auth"
 	"net/http"
 )
 
 func main() {
-	//conf := configs.LoadConfig()
+	conf := configs.LoadConfig()
 	router := http.NewServeMux()
-	auth.NewAuthHendler(router)
+	auth.NewAuthHendler(router, auth.AuthHandlerDeps{
+		Config: conf,
+	})
 
 	server := http.Server{
 		Addr:    ":8081",
