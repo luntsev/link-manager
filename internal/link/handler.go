@@ -91,12 +91,19 @@ func (handler *LinkHandler) Delete() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest) //400
 			return
 		}
+
+		link, err := handler.LinkRepo.GetById(uint(idRow))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest) //400
+			return
+		}
+
 		err = handler.LinkRepo.Delete(uint(idRow))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError) //500
 			return
 		}
-		response.Json(w, nil, http.StatusOK) //200
+		response.Json(w, link, http.StatusOK) //200
 	}
 }
 

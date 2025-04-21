@@ -6,6 +6,7 @@ import (
 	"link-manager/internal/auth"
 	"link-manager/internal/link"
 	"link-manager/pkg/db"
+	"link-manager/pkg/middleware"
 	"net/http"
 )
 
@@ -29,7 +30,7 @@ func main() {
 
 	server := http.Server{
 		Addr:    ":8081",
-		Handler: router,
+		Handler: middleware.Logging(router),
 	}
 
 	fmt.Println("Server listening on port 8081")

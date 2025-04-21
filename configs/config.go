@@ -30,7 +30,7 @@ func LoadConfig() *Config {
 			Dsn: os.Getenv("DSN"),
 		},
 		Auth: AuthConfig{
-			Secret: token.GenToken(6),
+			Secret: token.GenToken(4),
 		},
 	}
 }

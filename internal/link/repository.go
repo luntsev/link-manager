@@ -31,6 +31,12 @@ func (repo *LinkRepository) Delete(id uint) error {
 	return result.Error
 }
 
+func (repo *LinkRepository) GetById(id uint) (*Link, error) {
+	var link Link
+	result := repo.DataBase.DB.First(&link, "ID = ?", id)
+	return &link, result.Error
+}
+
 func NewLinkRepository(database *db.Db) *LinkRepository {
 	return &LinkRepository{
 		DataBase: database,
