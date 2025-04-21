@@ -9,16 +9,18 @@ type Link struct {
 	gorm.Model
 	Url  string `json:"url"`
 	Hash string `json:"hash" gorm:"uniqueIndex"`
+	Name string `json:"name"`
 }
 
-func NewLink(url string) *Link {
+func NewLink(url, name string) *Link {
 	link := Link{
-		Url: url,
+		Url:  url,
+		Name: name,
 	}
-	link.GenHash()
+	link.GenHash(3)
 	return &link
 }
 
-func (l *Link) GenHash() {
-	l.Hash = token.GenToken(10)
+func (l *Link) GenHash(n int) {
+	l.Hash = token.GenToken(n)
 }
