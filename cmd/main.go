@@ -5,6 +5,7 @@ import (
 	"link-manager/configs"
 	"link-manager/internal/auth"
 	"link-manager/internal/link"
+	"link-manager/internal/user"
 	"link-manager/pkg/db"
 	"link-manager/pkg/middleware"
 	"net/http"
@@ -18,10 +19,15 @@ func main() {
 	//Repository
 
 	linkRepository := link.NewLinkRepository(dataBase)
+	userRepository := user.NewUserRepository(dataBase)
+
+	//Services
+	authService := auth.NewAuthService(userRepository)
 
 	//Hendlers
 	auth.NewAuthHendler(router, auth.AuthHandlerDeps{
-		Config: conf,
+		Config:      conf,
+		AuthService: authService,
 	})
 
 	link.NewLinkHendler(router, link.LinkHandlerDeps{
