@@ -22,7 +22,7 @@ type LinkHandler struct {
 
 func (handler *LinkHandler) Create() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-
+		defer req.Body.Close()
 		body, err := request.HandleBody[CreateRequest](&w, req)
 		if err != nil {
 			return
@@ -45,6 +45,7 @@ func (handler *LinkHandler) Create() http.HandlerFunc {
 
 func (handler *LinkHandler) Read() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
 		hash := req.PathValue("hash")
 		link, err := handler.LinkRepo.GetByHash(hash)
 		if err != nil {
@@ -57,6 +58,7 @@ func (handler *LinkHandler) Read() http.HandlerFunc {
 
 func (handler *LinkHandler) Update() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
 		body, err := request.HandleBody[UpdateRequest](&w, req)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest) //400
@@ -86,6 +88,7 @@ func (handler *LinkHandler) Update() http.HandlerFunc {
 
 func (handler *LinkHandler) Delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
 		id := req.PathValue("id")
 		idRow, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {

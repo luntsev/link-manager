@@ -15,7 +15,7 @@ func (repo *UserRepository) Create(user *User) (*User, error) {
 
 func (repo *UserRepository) FindByEmail(email string) (*User, error) {
 	var user User
-	result := repo.DataBase.DB.First(&user, "Email = ?", email)
+	result := repo.DataBase.DB.First(&user, "email = ?", email)
 	return &user, result.Error
 }
 

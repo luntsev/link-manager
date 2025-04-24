@@ -20,6 +20,7 @@ type AuthHandler struct {
 
 func (handler *AuthHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
 		_, err := request.HandleBody[LoginRequest](&w, req)
 		if err != nil {
 			return
@@ -36,11 +37,12 @@ func (handler *AuthHandler) Login() http.HandlerFunc {
 
 func (handler *AuthHandler) Register() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
+		defer req.Body.Close()
 		body, err := request.HandleBody[RegisterRequest](&w, req)
 		if err != nil {
 			return
 		}
-		user, err := handler.AuthService.Register(body.Email, body.Password, body.Name)
+		user, _ := handler.AuthService.Register(body.Email, body.Password, body.Name)
 
 		response.Json(w, user, http.StatusOK) // 200
 	}
@@ -48,7 +50,8 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 
 func NewAuthHendler(router *http.ServeMux, deps AuthHandlerDeps) {
 	handler := &AuthHandler{
-		Config: deps.Config,
+		Config:      deps.Config,
+		AuthService: deps.AuthService,
 	}
 	router.HandleFunc("POST /auth/login", handler.Login())
 	router.HandleFunc("POST /auth/register", handler.Register())

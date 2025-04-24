@@ -7,9 +7,9 @@ import (
 
 type User struct {
 	gorm.Model
-	Email    string `json:"url" gorm:"uniqueIndex"`
-	Password string `json:"password"`
-	Name     string `json:"name" gorm:"uniqueIndex"`
+	Email    string `gorm:"uniqueIndex"`
+	Password string
+	Name     string
 }
 
 func NewUser(email, password, name string) *User {

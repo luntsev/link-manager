@@ -1,27 +1,32 @@
 package auth
 
 import (
-	"fmt"
+	"golang.org/x/crypto/bcrypt"
 	"link-manager/internal/user"
+	"log"
 )
 
 type AuthService struct {
-	userRepo *user.UserRepository
+	UserRepo *user.UserRepository
 }
 
 func NewAuthService(repo *user.UserRepository) *AuthService {
 	return &AuthService{
-		userRepo: repo,
+		UserRepo: repo,
 	}
 }
 
 func (service *AuthService) Register(email, password, name string) (*user.User, error) {
-	_, err := service.userRepo.FindByEmail(email)
-	if err != nil {
-		fmt.Println(err)
-		return nil, err
+	_, err := service.UserRepo.FindByEmail(email)
+	if err == nil {
+		log.Println("user alredy exist")
+		return nil, nil
 	}
 
-	user := user.NewUser(email, password, name)
-	return service.userRepo.Create(user)
+	hashedPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, err
+	}
+	user := user.NewUser(email, string(hashedPass), name)
+	return service.UserRepo.Create(user)
 }
