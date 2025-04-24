@@ -13,3 +13,7 @@ type RegisterRequest struct {
 	Name string `json:"name" validate:"required"`
 	LoginRequest
 }
+
+type RegisterResponse struct {
+	Token string `json:"token"`
+}

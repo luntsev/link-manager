@@ -1,8 +1,8 @@
 package auth
 
 import (
-	"fmt"
 	"link-manager/configs"
+	"link-manager/pkg/jwt"
 	"link-manager/pkg/request"
 	"link-manager/pkg/response"
 	"net/http"
@@ -21,17 +21,28 @@ type AuthHandler struct {
 func (handler *AuthHandler) Login() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		defer req.Body.Close()
-		_, err := request.HandleBody[LoginRequest](&w, req)
+		body, err := request.HandleBody[LoginRequest](&w, req)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		_, err = handler.AuthService.Login(body.Email, body.Password)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized) //401
 			return
 		}
 
-		resp := LoginResponse{
-			Token: "123",
+		token, err := jwt.NewJWT(handler.Config.Auth.Secret).Create(body.Email)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError) //500
+			return
 		}
 
-		response.Json(w, resp, 200)
-		fmt.Println("Login")
+		resp := &LoginResponse{
+			Token: token,
+		}
+
+		response.Json(w, resp, http.StatusOK) // 200
 	}
 }
 
@@ -40,11 +51,26 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 		defer req.Body.Close()
 		body, err := request.HandleBody[RegisterRequest](&w, req)
 		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		user, _ := handler.AuthService.Register(body.Email, body.Password, body.Name)
+		_, err = handler.AuthService.Register(body.Email, body.Password, body.Name)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError) //500
+			return
+		}
 
-		response.Json(w, user, http.StatusOK) // 200
+		token, err := jwt.NewJWT(handler.Config.Auth.Secret).Create(body.Email)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError) //500
+			return
+		}
+
+		resp := &RegisterResponse{
+			Token: token,
+		}
+
+		response.Json(w, resp, http.StatusOK) // 200
 	}
 }
 

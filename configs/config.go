@@ -2,7 +2,6 @@ package configs
 
 import (
 	"github.com/joho/godotenv"
-	"link-manager/pkg/token"
 	"log"
 	"os"
 )
@@ -30,7 +29,7 @@ func LoadConfig() *Config {
 			Dsn: os.Getenv("DSN"),
 		},
 		Auth: AuthConfig{
-			Secret: token.GenToken(4),
+			Secret: os.Getenv("SECRET"),
 		},
 	}
 }
