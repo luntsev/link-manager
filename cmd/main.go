@@ -32,6 +32,7 @@ func main() {
 
 	link.NewLinkHendler(router, link.LinkHandlerDeps{
 		LinkRepo: linkRepository,
+		Config:   conf,
 	})
 
 	//Middlewares

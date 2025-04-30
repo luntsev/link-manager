@@ -1,9 +1,12 @@
 package link
 
 import (
+	"fmt"
+	"link-manager/configs"
 	"link-manager/pkg/middleware"
 	"link-manager/pkg/request"
 	"link-manager/pkg/response"
+	"log"
 	"strconv"
 
 	//"link-manager/pkg/token"
@@ -14,6 +17,7 @@ import (
 
 type LinkHandlerDeps struct {
 	LinkRepo *LinkRepository
+	Config   *configs.Config
 }
 
 type LinkHandler struct {
@@ -21,9 +25,9 @@ type LinkHandler struct {
 }
 
 func (handler *LinkHandler) Create() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		defer req.Body.Close()
-		body, err := request.HandleBody[CreateRequest](&w, req)
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		body, err := request.HandleBody[CreateRequest](&w, r)
 		if err != nil {
 			return
 		}
@@ -44,28 +48,34 @@ func (handler *LinkHandler) Create() http.HandlerFunc {
 }
 
 func (handler *LinkHandler) Read() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		defer req.Body.Close()
-		hash := req.PathValue("hash")
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		hash := r.PathValue("hash")
 		link, err := handler.LinkRepo.GetByHash(hash)
 		if err != nil {
 			response.Json(w, err, http.StatusNotFound) //404
 			return
 		}
-		http.Redirect(w, req, link.Url, http.StatusTemporaryRedirect) //307
+		http.Redirect(w, r, link.Url, http.StatusTemporaryRedirect) //307
 	}
 }
 
 func (handler *LinkHandler) Update() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		defer req.Body.Close()
-		body, err := request.HandleBody[UpdateRequest](&w, req)
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		_, ok := r.Context().Value(middleware.ContextEmailKey).(string)
+		if !ok {
+			log.Println("wrong email in JWT token")
+			return
+		}
+
+		body, err := request.HandleBody[UpdateRequest](&w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest) //400
 			return
 		}
 
-		id := req.PathValue("id")
+		id := r.PathValue("id")
 		idRow, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest) //400
@@ -87,9 +97,15 @@ func (handler *LinkHandler) Update() http.HandlerFunc {
 }
 
 func (handler *LinkHandler) Delete() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		defer req.Body.Close()
-		id := req.PathValue("id")
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		_, ok := r.Context().Value(middleware.ContextEmailKey).(string)
+		if !ok {
+			log.Println("wrong email in JWT token")
+			return
+		}
+
+		id := r.PathValue("id")
 		idRow, err := strconv.ParseUint(id, 10, 32)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest) //400
@@ -111,13 +127,43 @@ func (handler *LinkHandler) Delete() http.HandlerFunc {
 	}
 }
 
+func (handler *LinkHandler) GetList() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		email, ok := r.Context().Value(middleware.ContextEmailKey).(string)
+		if !ok {
+			log.Println("wrong email in JWT token")
+			return
+		}
+		fmt.Println(email)
+
+		page, err := strconv.Atoi(r.URL.Query().Get("page"))
+		if err != nil {
+			page = 1
+		}
+
+		pageSize, err := strconv.Atoi(r.URL.Query().Get("pageSize"))
+		if err != nil {
+			pageSize = 100
+		}
+
+		resp := GetAllResponse{
+			Links: handler.LinkRepo.GetAll(page, pageSize),
+			Count: handler.LinkRepo.GetCount(),
+		}
+
+		response.Json(w, resp, http.StatusOK) // 200
+	}
+}
+
 func NewLinkHendler(router *http.ServeMux, deps LinkHandlerDeps) {
 	handler := &LinkHandler{
 		LinkRepo: deps.LinkRepo,
 	}
 
-	router.Handle("POST /link", middleware.IsAuthed(handler.Create()))
-	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update()))
-	router.HandleFunc("DELETE /link/{id}", handler.Delete())
+	router.Handle("POST /link", middleware.IsAuthed(handler.Create(), deps.Config))
+	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update(), deps.Config))
+	router.Handle("DELETE /link/{id}", middleware.IsAuthed(handler.Delete(), deps.Config))
 	router.HandleFunc("GET /{hash}", handler.Read())
+	router.Handle("GET /link", middleware.IsAuthed(handler.GetList(), deps.Config))
 }

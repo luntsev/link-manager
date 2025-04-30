@@ -19,9 +19,9 @@ type AuthHandler struct {
 }
 
 func (handler *AuthHandler) Login() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		defer req.Body.Close()
-		body, err := request.HandleBody[LoginRequest](&w, req)
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		body, err := request.HandleBody[LoginRequest](&w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -32,7 +32,9 @@ func (handler *AuthHandler) Login() http.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.NewJWT(handler.Config.Auth.Secret).Create(body.Email)
+		token, err := jwt.NewJWT(handler.Config.Auth.Secret).Create(jwt.JWTData{
+			Email: body.Email,
+		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError) //500
 			return
@@ -47,9 +49,9 @@ func (handler *AuthHandler) Login() http.HandlerFunc {
 }
 
 func (handler *AuthHandler) Register() http.HandlerFunc {
-	return func(w http.ResponseWriter, req *http.Request) {
-		defer req.Body.Close()
-		body, err := request.HandleBody[RegisterRequest](&w, req)
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		body, err := request.HandleBody[RegisterRequest](&w, r)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -60,7 +62,9 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 			return
 		}
 
-		token, err := jwt.NewJWT(handler.Config.Auth.Secret).Create(body.Email)
+		token, err := jwt.NewJWT(handler.Config.Auth.Secret).Create(jwt.JWTData{
+			Email: body.Email,
+		})
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError) //500
 			return
