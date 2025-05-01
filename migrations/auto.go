@@ -2,6 +2,7 @@ package main
 
 import (
 	"link-manager/internal/link"
+	"link-manager/internal/stat"
 	"link-manager/internal/user"
 	"os"
 
@@ -20,5 +21,5 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	db.AutoMigrate(&link.Link{}, &user.User{})
+	db.AutoMigrate(&link.Link{}, &user.User{}, &stat.Stat{})
 }

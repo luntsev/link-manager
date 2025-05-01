@@ -18,7 +18,16 @@ type AuthHandler struct {
 	*AuthService
 }
 
-func (handler *AuthHandler) Login() http.HandlerFunc {
+func NewAuthHendler(router *http.ServeMux, deps AuthHandlerDeps) {
+	handler := &AuthHandler{
+		Config:      deps.Config,
+		AuthService: deps.AuthService,
+	}
+	router.HandleFunc("POST /auth/login", handler.login())
+	router.HandleFunc("POST /auth/register", handler.register())
+}
+
+func (handler *AuthHandler) login() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		body, err := request.HandleBody[LoginRequest](&w, r)
@@ -48,7 +57,7 @@ func (handler *AuthHandler) Login() http.HandlerFunc {
 	}
 }
 
-func (handler *AuthHandler) Register() http.HandlerFunc {
+func (handler *AuthHandler) register() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		body, err := request.HandleBody[RegisterRequest](&w, r)
@@ -76,13 +85,4 @@ func (handler *AuthHandler) Register() http.HandlerFunc {
 
 		response.Json(w, resp, http.StatusOK) // 200
 	}
-}
-
-func NewAuthHendler(router *http.ServeMux, deps AuthHandlerDeps) {
-	handler := &AuthHandler{
-		Config:      deps.Config,
-		AuthService: deps.AuthService,
-	}
-	router.HandleFunc("POST /auth/login", handler.Login())
-	router.HandleFunc("POST /auth/register", handler.Register())
 }

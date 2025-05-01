@@ -3,6 +3,7 @@ package link
 import (
 	"link-manager/pkg/db"
 
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -46,15 +47,25 @@ func (repo *LinkRepository) GetCount() int64 {
 	return count
 }
 
-func (repo *LinkRepository) GetAll(page, pageSize int) []Link {
+func (repo *LinkRepository) GetAll(page, pageSize int) ([]Link, int64) {
 	var links []Link
-	repo.DataBase.
+	var count int64
+
+	query := repo.DataBase.
 		Table("links").
 		Where("deleted_at is null").
+		Session(&gorm.Session{})
+
+	query.
+		Order("id asc").
 		Limit(pageSize).
 		Offset((page - 1) * pageSize).
 		Scan(&links)
-	return links
+
+	query.
+		Count(&count)
+
+	return links, count
 }
 
 func NewLinkRepository(database *db.Db) *LinkRepository {

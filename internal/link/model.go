@@ -1,15 +1,18 @@
 package link
 
 import (
-	"gorm.io/gorm"
+	"link-manager/internal/stat"
 	"link-manager/pkg/token"
+
+	"gorm.io/gorm"
 )
 
 type Link struct {
 	gorm.Model
-	Url  string `json:"url"`
-	Hash string `json:"hash" gorm:"uniqueIndex"`
-	Name string `json:"name"`
+	Url   string      `json:"url"`
+	Hash  string      `json:"hash" gorm:"uniqueIndex"`
+	Name  string      `json:"name"`
+	Stats []stat.Stat `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 func NewLink(url, name string) *Link {

@@ -3,28 +3,42 @@ package link
 import (
 	"fmt"
 	"link-manager/configs"
+	"link-manager/pkg/event"
 	"link-manager/pkg/middleware"
 	"link-manager/pkg/request"
 	"link-manager/pkg/response"
 	"log"
-	"strconv"
-
-	//"link-manager/pkg/token"
 	"net/http"
+	"strconv"
 
 	"gorm.io/gorm"
 )
 
 type LinkHandlerDeps struct {
 	LinkRepo *LinkRepository
+	EventBus *event.EventBus
 	Config   *configs.Config
 }
 
 type LinkHandler struct {
 	LinkRepo *LinkRepository
+	EventBus *event.EventBus
 }
 
-func (handler *LinkHandler) Create() http.HandlerFunc {
+func NewLinkHendler(router *http.ServeMux, deps LinkHandlerDeps) {
+	handler := &LinkHandler{
+		LinkRepo: deps.LinkRepo,
+		EventBus: deps.EventBus,
+	}
+
+	router.Handle("POST /link", middleware.IsAuthed(handler.create(), deps.Config))
+	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.update(), deps.Config))
+	router.Handle("DELETE /link/{id}", middleware.IsAuthed(handler.delete(), deps.Config))
+	router.HandleFunc("GET /{hash}", handler.read())
+	router.Handle("GET /link", middleware.IsAuthed(handler.getList(), deps.Config))
+}
+
+func (handler *LinkHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		body, err := request.HandleBody[CreateRequest](&w, r)
@@ -47,7 +61,7 @@ func (handler *LinkHandler) Create() http.HandlerFunc {
 	}
 }
 
-func (handler *LinkHandler) Read() http.HandlerFunc {
+func (handler *LinkHandler) read() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		hash := r.PathValue("hash")
@@ -56,11 +70,16 @@ func (handler *LinkHandler) Read() http.HandlerFunc {
 			response.Json(w, err, http.StatusNotFound) //404
 			return
 		}
+		go handler.EventBus.Pubish(event.Event{
+			Type:  event.EventLinkGet,
+			Event: link.ID,
+		})
+
 		http.Redirect(w, r, link.Url, http.StatusTemporaryRedirect) //307
 	}
 }
 
-func (handler *LinkHandler) Update() http.HandlerFunc {
+func (handler *LinkHandler) update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		_, ok := r.Context().Value(middleware.ContextEmailKey).(string)
@@ -96,7 +115,7 @@ func (handler *LinkHandler) Update() http.HandlerFunc {
 	}
 }
 
-func (handler *LinkHandler) Delete() http.HandlerFunc {
+func (handler *LinkHandler) delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		_, ok := r.Context().Value(middleware.ContextEmailKey).(string)
@@ -127,7 +146,7 @@ func (handler *LinkHandler) Delete() http.HandlerFunc {
 	}
 }
 
-func (handler *LinkHandler) GetList() http.HandlerFunc {
+func (handler *LinkHandler) getList() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		email, ok := r.Context().Value(middleware.ContextEmailKey).(string)
@@ -147,23 +166,12 @@ func (handler *LinkHandler) GetList() http.HandlerFunc {
 			pageSize = 100
 		}
 
+		links, count := handler.LinkRepo.GetAll(page, pageSize)
 		resp := GetAllResponse{
-			Links: handler.LinkRepo.GetAll(page, pageSize),
-			Count: handler.LinkRepo.GetCount(),
+			Links: links,
+			Count: count,
 		}
 
 		response.Json(w, resp, http.StatusOK) // 200
 	}
-}
-
-func NewLinkHendler(router *http.ServeMux, deps LinkHandlerDeps) {
-	handler := &LinkHandler{
-		LinkRepo: deps.LinkRepo,
-	}
-
-	router.Handle("POST /link", middleware.IsAuthed(handler.Create(), deps.Config))
-	router.Handle("PATCH /link/{id}", middleware.IsAuthed(handler.Update(), deps.Config))
-	router.Handle("DELETE /link/{id}", middleware.IsAuthed(handler.Delete(), deps.Config))
-	router.HandleFunc("GET /{hash}", handler.Read())
-	router.Handle("GET /link", middleware.IsAuthed(handler.GetList(), deps.Config))
 }
