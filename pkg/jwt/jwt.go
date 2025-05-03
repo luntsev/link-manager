@@ -11,11 +11,11 @@ type JWT struct {
 }
 
 func (j *JWT) Create(data JWTData) (string, error) {
-	jToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	jwtToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email": data.Email,
 	})
 
-	token, err := jToken.SignedString([]byte(j.Secret))
+	token, err := jwtToken.SignedString([]byte(j.Secret))
 	if err != nil {
 		return "", err
 	}

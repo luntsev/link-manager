@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io"
 	"link-manager/internal/auth"
 	"link-manager/internal/user"
@@ -22,8 +21,6 @@ func initDb() *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(os.Getenv("DSN"))
 
 	db, err := gorm.Open(postgres.Open(os.Getenv("DSN")), &gorm.Config{})
 	if err != nil {
