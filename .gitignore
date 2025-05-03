@@ -1,5 +1,6 @@
-.vscode/*
+/.vscode/*
 postgres-data
-.env
-.git
+/.env
+/.git
 docker-compose.yml
+/cmd/.env

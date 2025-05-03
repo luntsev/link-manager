@@ -13,8 +13,8 @@ import (
 	"net/http"
 )
 
-func main() {
-	conf := configs.LoadConfig()
+func app(envFile string) http.Handler {
+	conf := configs.LoadConfig(envFile)
 	dataBase := db.NewDb(conf)
 	router := http.NewServeMux()
 	eventBus := event.NewEventBus()
@@ -50,19 +50,25 @@ func main() {
 		StatRepository: statRepository,
 	})
 
-	//Middlewares
+	go statService.AddClick()
 
+	//Middlewares
 	stackMw := middleware.Chain(
 		middleware.CORS,
 		middleware.Logging,
 	)
 
+	return stackMw(router)
+}
+
+func main() {
+
+	stack := app("../.env")
 	server := http.Server{
 		Addr:    ":8081",
-		Handler: stackMw(router),
+		Handler: stack,
 	}
 
-	go statService.AddClick()
 	fmt.Println("Server listening on port 8081")
 	server.ListenAndServe()
 }

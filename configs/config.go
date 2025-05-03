@@ -19,8 +19,8 @@ type AuthConfig struct {
 	Secret string
 }
 
-func LoadConfig() *Config {
-	err := godotenv.Load("../.env")
+func LoadConfig(envFile string) *Config {
+	err := godotenv.Load(envFile)
 	if err != nil {
 		log.Printf("Error loading .env file: %s. Using default config.", err.Error())
 	}
