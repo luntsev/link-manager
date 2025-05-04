@@ -83,6 +83,6 @@ func (handler *AuthHandler) UserRegister() http.HandlerFunc {
 			Token: token,
 		}
 
-		response.Json(w, resp, http.StatusOK) // 200
+		response.Json(w, resp, http.StatusCreated) // 200
 	}
 }

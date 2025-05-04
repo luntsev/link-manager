@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"link-manager/internal/auth"
 	"link-manager/internal/user"
@@ -27,6 +28,63 @@ func initDb() *gorm.DB {
 		panic(err)
 	}
 	return db
+}
+
+func addUser(user *user.User) (*http.Response, error) {
+	ts := httptest.NewServer(app(".env"))
+	defer ts.Close()
+
+	data, err := json.Marshal(user)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := http.Post(ts.URL+"/auth/register", "application/json", bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func TestRegisterSuccess(t *testing.T) {
+	db := initDb()
+	newUser := &user.User{
+		Email:    "name@domian.ru",
+		Password: "password",
+		Name:     "Test User",
+	}
+
+	resp, err := addUser(newUser)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("want status code: %d, got status code^ %d", http.StatusCreated, resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	var regResp auth.RegisterResponse
+	err = json.Unmarshal(data, &regResp)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	var encryptedPass string
+
+	db.Table("users").
+		Select("password").
+		Where("email = ? AND name = ?", newUser.Email, newUser.Name).
+		Scan(&encryptedPass)
+
+	fmt.Println(encryptedPass)
 }
 
 func initData(db *gorm.DB) {

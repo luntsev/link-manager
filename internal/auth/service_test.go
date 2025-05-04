@@ -18,7 +18,7 @@ func (mockRepo *MockUserRepository) FindByEmail(email string) (*user.User, error
 	return nil, errors.New("record not found")
 }
 
-func TestRegisterSuccess(t *testing.T) {
+func TestRegisterMockSuccess(t *testing.T) {
 	authService := auth.NewAuthService(&MockUserRepository{})
 	user, err := authService.Register("name@domain.ru", "passw", "Test User")
 	if err != nil {
