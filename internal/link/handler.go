@@ -40,7 +40,6 @@ func NewLinkHendler(router *http.ServeMux, deps LinkHandlerDeps) {
 
 func (handler *LinkHandler) create() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		body, err := request.HandleBody[CreateRequest](&w, r)
 		if err != nil {
 			return
@@ -63,7 +62,6 @@ func (handler *LinkHandler) create() http.HandlerFunc {
 
 func (handler *LinkHandler) read() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		hash := r.PathValue("hash")
 		link, err := handler.LinkRepo.GetByHash(hash)
 		if err != nil {
@@ -81,7 +79,6 @@ func (handler *LinkHandler) read() http.HandlerFunc {
 
 func (handler *LinkHandler) update() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		_, ok := r.Context().Value(middleware.ContextEmailKey).(string)
 		if !ok {
 			log.Println("wrong email in JWT token")
@@ -117,7 +114,6 @@ func (handler *LinkHandler) update() http.HandlerFunc {
 
 func (handler *LinkHandler) delete() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		_, ok := r.Context().Value(middleware.ContextEmailKey).(string)
 		if !ok {
 			log.Println("wrong email in JWT token")
@@ -148,7 +144,6 @@ func (handler *LinkHandler) delete() http.HandlerFunc {
 
 func (handler *LinkHandler) getList() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
 		email, ok := r.Context().Value(middleware.ContextEmailKey).(string)
 		if !ok {
 			log.Println("wrong email in JWT token")
